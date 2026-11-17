@@ -34,7 +34,8 @@
         {
           "title": "سلاسل علمية",
           "match": ".",
-          "pos": 4
+          "pos": 4,
+          "general": true
         }
       ]
     },
@@ -65,5 +66,13 @@
       "description": "قناة الشيخ الشخصية: فوائد متنوعة ينقلها من كتب أهل العلم."
     }
   ],
-  "items": []
+  "items": [],
+  "fawaid": [
+    "tadabbor111",
+    "fawaid_alsiar",
+    "abusalehabsar",
+    "absarulislam2",
+    "absarulislam",
+    "absarulislam1"
+  ]
 }

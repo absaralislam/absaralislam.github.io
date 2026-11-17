@@ -78,6 +78,7 @@ async function boot() {
   const [lib, tg, yt] = await Promise.all([getJSON("data/library.json"), getJSON("data/tg/index.json"), getJSON("data/youtube.json")]);
   S.site = lib.site || {};
   S.programs = lib.programs || [];
+  S.fawaid = lib.fawaid || [];
   S.manual = lib.items || [];
   S.tg = { shard: tg.shard || 500, channels: tg.channels || {}, books: tg.books || [], videos: tg.videos || [] };
   S.yt = { playlists: yt.playlists || [], items: yt.items || [], sources: yt.site?.sources || {} };
@@ -170,15 +171,17 @@ function thumb(it) {
   return `<div class="th${book ? " book" : ""}">${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : I[it.type] || I.article}${it.length ? `<span class="dur">${esc(it.length)}</span>` : ""}</div>`;
 }
 
-function row(it, q, showThumb = it.type !== "article" || (!it.text && !!imgOf(it))) {
+function row(it, q, showThumb = it.type !== "article" || (!it.text && !!imgOf(it)), chan = false) {
   const p = programOf(it);
+  const cl = chan && S.tg.channels[chOf(it)]?.label;
   const ex = excerpt(String(it.summary || it.excerpt || it.text || "").replace(/https?:\/\/\S+/g, ""));
   return `<a class="row" href="#/i/${enc(it.id)}">
     ${showThumb ? thumb(it) : ""}
     <div class="bd">
+      ${cl ? `<div class="chan">${esc(cl)}</div>` : ""}
       <h3>${hl(it.title || ex.slice(0, 80), q)}</h3>
       ${ex && ex !== it.title ? `<div class="ex">${hl(ex, q)}</div>` : ""}
-      <div class="meta">${it.type !== "article" ? `<span class="k">${TYPE[it.type] || ""}</span>` : ""}${p ? `<span>${esc(p.title)}</span>` : ""}${it.size ? `<span>${esc(it.size)}</span>` : ""}${it.date ? `<span>${fmtDate(it.date)}</span>` : ""}</div>
+      <div class="meta">${it.type !== "article" ? `<span class="k">${TYPE[it.type] || ""}</span>` : ""}${p && !cl ? `<span>${esc(p.title)}</span>` : ""}${it.size ? `<span>${esc(it.size)}</span>` : ""}${it.date ? `<span>${fmtDate(it.date)}</span>` : ""}</div>
     </div>
   </a>`;
 }
@@ -224,7 +227,7 @@ function list(source, opts = {}) {
       const items = isFeed ? await source.next(PAGE) : source.slice(shown, shown + PAGE);
       if (tok !== token) return;
       shown += items.length;
-      box.insertAdjacentHTML("beforeend", items.map((i) => row(i, opts.q)).join(""));
+      box.insertAdjacentHTML("beforeend", items.map((i) => row(i, opts.q, undefined, opts.chan)).join(""));
       if (!shown) box.outerHTML = `<div class="empty">${opts.empty || "لا توجد مواد."}</div>`;
       btn.hidden = isFeed ? source.done : shown >= source.length;
       btn.disabled = false; btn.textContent = "عرض المزيد";
@@ -235,11 +238,21 @@ function list(source, opts = {}) {
   return `<div class="rows${opts.two === false ? "" : " two"}" id="${id}"></div><button class="btn wide" id="${id}b" hidden>عرض المزيد</button>`;
 }
 
+/* ================= أدوات المنشورات ================= */
+const isPost = (it) => it.type !== "book" && it.type !== "file" && it.type !== "other";
+function matcher(q) {
+  const terms = norm(q).split(/\s+/).filter(Boolean);
+  return terms.length ? (it) => terms.every((t) => searchText(it).includes(t)) : () => true;
+}
+// نموذج بحث يبقى في الصفحة نفسها: يضيف q إلى رابطها الحالي
+const localSearch = (q, ph) => `<form class="field local" data-local>${I.search}<input name="q" type="search" value="${esc(q)}" placeholder="${esc(ph)}" autocomplete="off">${q ? `<a class="clear" href="javascript:void 0" data-clear aria-label="مسح البحث">✕</a>` : ""}</form>`;
+const fawaidChannels = () => (S.fawaid.length ? S.fawaid : Object.keys(S.tg.channels)).filter((u) => S.tg.channels[u]);
+
 /* ================= الصفحات ================= */
 function viewHome() {
   const s = S.site;
   const posts = Object.values(S.tg.channels).reduce((n, c) => n + c.count, 0);
-  const latest = Object.values(S.tg.channels).flatMap((c) => c.latest).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
+  const latest = fawaidChannels().flatMap((u) => S.tg.channels[u].latest).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
   const vids = S.yt.items.slice(0, 4);
   const books = [...S.manual.filter((i) => i.type === "book"), ...S.tg.books].slice(0, 4);
   return `
@@ -262,8 +275,8 @@ function viewHome() {
   </section>
 
   ${latest.length ? `<section class="sec">
-    <div class="sec-h"><h2>أحدث الفوائد</h2></div>
-    <div class="rows two">${latest.map((i) => row(i)).join("")}</div>
+    <div class="sec-h"><h2>أحدث الفوائد</h2><a class="more" href="#/fawaid">كل الفوائد ←</a></div>
+    <div class="rows two">${latest.map((i) => row(i, "", undefined, true)).join("")}</div>
   </section>` : ""}
 
   ${vids.length ? `<section class="sec">
@@ -302,21 +315,24 @@ function viewProgram(id, qs) {
 
   let body = "";
   if (tab === "posts") {
-    const ch = chans.includes(qs.get("ch")) ? qs.get("ch") : "";
+    const ch = chans.includes(qs.get("ch")) ? qs.get("ch") : chans[0];
     const tag = qs.get("tag") || "";
-    const users = ch ? [ch] : chans;
+    const q = (qs.get("q") || "").trim();
+    const users = [ch];
     const tagCounts = {};
     for (const u of users) for (const [t, c] of S.tg.channels[u].tags || []) tagCounts[t] = (tagCounts[t] || 0) + c;
     const tags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 30);
-    body += chans.length > 1 ? `<div class="chips">
-        <a class="chip ${!ch ? "on" : ""}" href="${link({})}">الكل</a>
-        ${chans.map((u) => `<a class="chip ${u === ch ? "on" : ""}" href="${link({ ch: u })}">${esc(S.tg.channels[u].label)}<small>${num(S.tg.channels[u].count)}</small></a>`).join("")}
-      </div>` : "";
+    body += chans.length > 1 ? `<nav class="seg">
+        ${chans.map((u) => `<a class="${u === ch ? "on" : ""}" href="${link({ ch: u })}">${esc(S.tg.channels[u].label)}<small>${num(S.tg.channels[u].count)} منشور</small></a>`).join("")}
+      </nav>` : "";
+    body += localSearch(q, `ابحث في ${S.tg.channels[ch].label}…`);
     body += tags.length ? `<div class="chips">
         <a class="chip ${!tag ? "on" : ""}" href="${link({ ch })}">كل المواضيع</a>
         ${tags.map(([t, c]) => `<a class="chip ${t === tag ? "on" : ""}" href="${link({ ch, tag: t })}">#${esc(t.replace(/_/g, " "))}<small>${num(c)}</small></a>`).join("")}
       </div>` : "";
-    body += list(new Feed(users, tag ? (it) => it.tags?.includes(tag) : (it) => it.type !== "book" && it.type !== "file"), { empty: "لا توجد منشورات." });
+    const m = matcher(q);
+    body += list(new Feed(users, (it) => isPost(it) && (!tag || it.tags?.includes(tag)) && m(it)),
+      { two: false, q, empty: q ? `لا نتائج لـ «${esc(q)}» في هذه القناة.` : "لا توجد منشورات." });
   } else if (tab === "files") {
     body += `<p class="muted" style="margin:0 0 12px">ملفات البرنامج (PDF): التفسير، ومعاني الكلمات، والوقف والابتداء، والفوائد، والعمل بالآيات، والتفريغات، والجداول.</p>`
       + list(new Feed(chans, (it) => it.type === "file"), { empty: "لا توجد ملفات." });
@@ -337,6 +353,7 @@ function viewProgram(id, qs) {
     }
   }
 
+
   const links = [
     ...chans.map((u) => `<a class="btn" href="https://t.me/${esc(u)}" target="_blank" rel="noopener">${I.tg} ${esc(S.tg.channels[u].label)}</a>`),
     ...(okUrl(p.youtube) ? [`<a class="btn" href="${esc(p.youtube)}" target="_blank" rel="noopener">${I.yt} قناة يوتيوب</a>`] : []),
@@ -349,6 +366,29 @@ function viewProgram(id, qs) {
     </div>
     ${tabs.length > 1 ? `<nav class="tabs">${tabs.map(([k, l]) => `<a class="${k === tab ? "on" : ""}" href="#/p/${enc(id)}?tab=${k}">${l}</a>`).join("")}</nav>` : ""}
     ${body}`;
+}
+
+function viewFawaid(qs) {
+  const all = fawaidChannels();
+  let sel = qs.has("c") ? (qs.get("c") || "").split(",") : store.get("fawaidSel", []);
+  sel = sel.filter((u) => all.includes(u));
+  if (!sel.length) sel = all;
+  store.set("fawaidSel", sel.length === all.length ? [] : sel);
+  const q = (qs.get("q") || "").trim();
+  const isAll = sel.length === all.length;
+  const href = (chs) => `#/fawaid?c=${enc(chs.length === all.length ? "" : chs.join(","))}${q ? `&q=${enc(q)}` : ""}`;
+  // عند «الكل»: الضغط على قناة يعرضها وحدها؛ وإلا فالضغط يضيفها أو يزيلها
+  const toggle = (u) => (isAll ? [u] : sel.includes(u) ? sel.filter((x) => x !== u) : [...sel, u]);
+  const total = sel.reduce((n, u) => n + S.tg.channels[u].count, 0);
+  const m = matcher(q);
+  return `<div class="page-h"><h1>الفوائد</h1><p>أحدث ما نُشر في قنوات الشيخ، الأحدث أولاً. اختر القنوات التي تريدها.</p></div>
+    <div class="chips wrap">
+      <a class="chip ${isAll ? "on" : ""}" href="${href(all)}">كل القنوات</a>
+      ${all.map((u) => `<a class="chip ${!isAll && sel.includes(u) ? "on" : ""}" href="${href(toggle(u).length ? toggle(u) : all)}">${esc(S.tg.channels[u].label)}</a>`).join("")}
+    </div>
+    ${localSearch(q, isAll ? "ابحث في كل الفوائد…" : "ابحث في القنوات المختارة…")}
+    <p class="muted" style="margin:0 0 10px;font-size:14px">${q ? `نتائج البحث عن «${esc(q)}»` : `${num(total)} منشور`}</p>
+    ${list(new Feed(sel, (it) => isPost(it) && m(it)), { two: false, chan: true, q, empty: q ? `لا نتائج لـ «${esc(q)}».` : "لا توجد منشورات." })}`;
 }
 
 const weekPls = (no) => S.yt.playlists.filter((p) => p.week === no);
@@ -398,9 +438,11 @@ async function viewWeek(u, no) {
 function viewVideos() {
   const progs = S.programs.filter((p) => playlistsOf(p.id).length);
   return `<div class="page-h"><h1>المرئيات</h1><p>دروس البرامج على يوتيوب مرتّبةً في سلاسلها، والمقاطع المنشورة في القنوات.</p></div>
-    ${progs.map((p) => groupPlaylists(p, playlistsOf(p.id)).map((g, gi) => `
+    ${progs.map((p) => groupPlaylists(p, playlistsOf(p.id)).map((g, gi) => ({ p, g, gi }))).flat()
+      .sort((a, b) => !!b.g.general - !!a.g.general).map(({ p, g, gi }, i, arr) => `
+      ${!g.general && (i === 0 || arr[i - 1].g.general || arr[i - 1].p !== p) ? `<h2 class="prog-h">${esc(p.title)}</h2>` : ""}
       <section class="sec"><div class="sec-h"><h2>${esc(g.title || p.title)}</h2><a class="more" href="#/p/${enc(p.id)}?tab=videos&g=${gi}">الكل (${num(g.list.length)}) ←</a></div>
-      <div class="plgrid">${g.list.slice(0, 8).map(playlistCard).join("")}</div></section>`).join("")).join("")}
+      <div class="plgrid">${g.list.slice(0, 8).map(playlistCard).join("")}</div></section>`).join("")}
     <section class="sec"><div class="sec-h"><h2>أحدث المرئيات</h2></div>${list(S.yt.items)}</section>
     ${S.tg.videos.length ? `<section class="sec"><div class="sec-h"><h2>مقاطع منشورة في القنوات</h2></div>${list(S.tg.videos)}</section>` : ""}`;
 }
@@ -569,6 +611,7 @@ async function render() {
   switch (parts[0]) {
     case undefined: out = viewHome(); nav = "home"; break;
     case "programs": out = viewPrograms(); nav = "programs"; break;
+    case "fawaid": out = viewFawaid(qs); nav = "fawaid"; break;
     case "p": out = viewProgram(parts[1], qs); nav = "programs"; break;
     case "videos": out = viewVideos(); nav = "videos"; break;
     case "pl": out = viewPlaylist(parts[1]); nav = "videos"; break;
@@ -594,7 +637,15 @@ async function render() {
 }
 
 /* ================= أحداث عامة ================= */
+function setQ(q) {
+  const [path, qstr] = location.hash.replace(/^#/, "").split("?");
+  const p = new URLSearchParams(qstr || "");
+  q ? p.set("q", q) : p.delete("q");
+  location.hash = `#${path}${[...p].length ? `?${p}` : ""}`;
+}
 $app.addEventListener("submit", (e) => {
+  const lf = e.target.closest("[data-local]");
+  if (lf) { e.preventDefault(); setQ(lf.q.value.trim()); return; }
   const f = e.target.closest("[data-search]");
   if (!f) return;
   e.preventDefault();
@@ -603,6 +654,7 @@ $app.addEventListener("submit", (e) => {
 });
 
 $app.addEventListener("click", async (e) => {
+  if (e.target.closest("[data-clear]")) { e.preventDefault(); setQ(""); return; }
   const fs = e.target.closest("[data-fs]");
   if (fs) {
     const cur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fs")) || 19;
