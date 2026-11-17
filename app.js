@@ -105,7 +105,7 @@ function shard(u, k) {
   const key = `${u}/${k}`;
   if (!S.shards.has(key)) {
     S.shards.set(key, getJSON(`data/tg/${u}/${k}.json`).then((d) => {
-      const items = d.items || [];
+      const items = (d.items || []).filter((it) => it.type !== "other"); // كتب غير الشيخ لا تُعرض
       for (const it of items) S.byId.set(tidy(enrich(it)).id, it);
       return items;
     }));

@@ -218,7 +218,7 @@ def classify(it):
     if it.get("doc", "").lower().endswith(".pdf"):
         it["type"] = "file" if FILE_RE.search(it["title"]) or FILE_RE.search(it["doc"].replace("_", " ")) else "book"
         if it["type"] == "book" and not authored(it):
-            it["type"] = "file"   # كتاب لغير الشيخ نشره للفائدة: يبقى في ملفات البرنامج لا في قسم الكتب
+            it["type"] = "other"  # كتاب لغير الشيخ نشره للفائدة: لا يُعرض في التطبيق إطلاقاً
 
 
 def organize(items, weeks_on):
@@ -419,7 +419,7 @@ def build_index(sources):
         tags = Counter(t for it in items for t in it.get("tags", []))
         types = Counter(it["type"] for it in items)
         channels[u] = {
-            "label": s.get("label") or u, "program": s.get("program"), "count": len(items),
+            "label": s.get("label") or u, "program": s.get("program"), "count": len(items) - types.get("other", 0),
             "types": dict(types), "max": items[0]["n"],
             "shards": sorted({it["n"] // SHARD for it in items}, reverse=True),
             "latest": [compact(it) for it in items[:8] if it["type"] == "article"][:6],
