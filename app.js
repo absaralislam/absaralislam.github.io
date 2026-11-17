@@ -206,7 +206,7 @@ function groupPlaylists(prog, pls) {
   const other = { title: groups.length ? "سلاسل أخرى" : "", list: [] };
   const latest = (p) => p.videos.map((v) => S.byId.get(v)?.date || "").sort().pop() || "";
   for (const p of pls) (groups.find((g) => g.re.test(p.title)) || other).list.push(p);
-  return [...groups, other].filter((g) => g.list.length).map((g) => ({ ...g,
+  return [...groups, other].filter((g) => g.list.length).sort((a, b) => (a.pos ?? 9) - (b.pos ?? 9)).map((g) => ({ ...g,
     list: g.list.sort((a, b) => (g.weeks ? (b.week || 0) - (a.week || 0) : 0) || latest(b).localeCompare(latest(a))) }));
 }
 
