@@ -1,0 +1,53 @@
+name: مزامنة تليجرام ويوتيوب
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # كل نصف ساعة
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "جلب أرشيف تليجرام كاملاً"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: تليجرام
+        run: python3 scripts/sync_telegram.py ${{ inputs.full && '--full' || '' }}
+
+      - name: حفظ الصور
+        run: |
+          pip install --quiet pillow
+          python3 scripts/sync_images.py --limit 500
+
+      - name: يوتيوب
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python3 scripts/sync_youtube.py
+
+      - name: حفظ التغييرات
+        run: |
+          git config user.name "library-sync"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "لا جديد"
+          else
+            git commit -m "مزامنة المحتوى $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          fi
