@@ -13,7 +13,7 @@ import argparse, glob, json, os, shutil, subprocess, sys, time
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sync_telegram import load_channel, save_channel, OUTDIR, UA
+from sync_telegram import load_channel, save_channel, OUTDIR, UA, fetch, parse_page
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMGDIR = os.path.join(ROOT, "data", "img")
@@ -48,6 +48,21 @@ def shrink(path):
             os.remove(tmp)
 
 
+def download(url):
+    with urlopen(Request(url, headers={"User-Agent": UA}), timeout=30) as r:
+        return r.read()
+
+
+def refresh(u, n, items):
+    """روابط صور المنشورات القديمة تنتهي: نعيد قراءة صفحة المنشور لنأخذ رابطاً جديداً (الصفحة تحدّث 20 منشوراً معاً)."""
+    page, _ = fetch(f"https://t.me/s/{u}?before={n + 1}")
+    for m in parse_page(page):
+        k = m["post"].split("/")[-1]
+        if k.isdigit() and int(k) in items and m["photos"]:
+            items[int(k)]["photo"] = m["photos"][0]
+    time.sleep(1)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=3000, help="أقصى عدد صور في التشغيل الواحد")
@@ -68,11 +83,14 @@ def main():
                     break
                 budget -= 1
                 try:
-                    with urlopen(Request(it["photo"], headers={"User-Agent": UA}), timeout=30) as r:
-                        data = r.read()
-                except Exception as e:
-                    print(f"  ! {u}/{n}: {e}", file=sys.stderr)  # رابط منتهٍ: سيُحدَّث في مزامنة لاحقة
-                    continue
+                    data = download(it["photo"])
+                except Exception:
+                    try:  # رابط منتهٍ: نجلب رابطاً جديداً من صفحة المنشور ونعيد المحاولة
+                        refresh(u, n, items)
+                        data = download(it["photo"])
+                    except Exception as e:
+                        print(f"  ! {u}/{n}: {e}", file=sys.stderr)
+                        continue
                 os.makedirs(os.path.dirname(path), exist_ok=True)
                 with open(path, "wb") as f:
                     f.write(data)

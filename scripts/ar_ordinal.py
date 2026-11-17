@@ -40,7 +40,7 @@ def ordinal(words):
 
 def week_number(title):
     """«مقرر الحفظ للأسبوع السابع والتسعين» ← 97"""
-    m = re.search(r"(?:لل|ال)[اأإ]سبوع\s+(.+)", title or "")
+    m = re.search(r"(?:لل|ال)[اأإ][سص][بي]وع\s+(.+)", title or "")
     return ordinal(m.group(1).split()) if m else None
 
 

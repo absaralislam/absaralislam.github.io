@@ -82,6 +82,7 @@ async function boot() {
   S.tg = { shard: tg.shard || 500, channels: tg.channels || {}, books: tg.books || [], videos: tg.videos || [] };
   S.yt = { playlists: yt.playlists || [], items: yt.items || [], sources: yt.site?.sources || {} };
   for (const it of [...S.yt.items, ...S.tg.videos, ...S.tg.books]) tidy(it);
+  for (const p of S.yt.playlists) p.title = p.title.replace(/^#\s*/, "").replace("الأسيوع", "الأسبوع");
   for (const it of [...S.manual, ...S.yt.items]) S.byId.set(it.id, it);
   S.ytByPl = new Map(S.yt.playlists.map((p) => [p.id, p]));
   S.ytByVid = new Map(S.yt.items.map((v) => [v.youtube, v]));
@@ -205,7 +206,8 @@ function groupPlaylists(prog, pls) {
   const other = { title: groups.length ? "سلاسل أخرى" : "", list: [] };
   const latest = (p) => p.videos.map((v) => S.byId.get(v)?.date || "").sort().pop() || "";
   for (const p of pls) (groups.find((g) => g.re.test(p.title)) || other).list.push(p);
-  return [...groups, other].filter((g) => g.list.length).map((g) => ({ ...g, list: g.list.sort((a, b) => latest(b).localeCompare(latest(a))) }));
+  return [...groups, other].filter((g) => g.list.length).map((g) => ({ ...g,
+    list: g.list.sort((a, b) => (g.weeks ? (b.week || 0) - (a.week || 0) : 0) || latest(b).localeCompare(latest(a))) }));
 }
 
 /* قائمة بزر «المزيد» — من مصفوفة جاهزة أو من Feed متدرّج */
@@ -325,8 +327,16 @@ function viewProgram(id, qs) {
       <div class="rows two">${S.tg.channels[weekCh].weeks.map((w) => weekCard(weekCh, w)).join("")}</div>`;
   } else if (tab === "videos") {
     const groups = groupPlaylists(p, pls);
-    body += groups.map((g) => `${g.title ? `<h2 class="grp-h">${esc(g.title)}</h2>` : ""}<div class="plgrid">${g.list.map(playlistCard).join("")}</div>`).join("");
-    body += `<h2 class="grp-h">كل المرئيات</h2>` + list(vids);
+    const gi = qs.get("g");
+    if (gi !== null && groups[+gi]) {
+      const g = groups[+gi];
+      body += `<div class="chips"><a class="chip" href="${link({})}">كل المجموعات</a>${groups.map((x, i) => `<a class="chip ${i === +gi ? "on" : ""}" href="${link({ g: String(i) })}">${esc(x.title)}<small>${num(x.list.length)}</small></a>`).join("")}</div>
+        <div class="plgrid">${g.list.map(playlistCard).join("")}</div>`;
+    } else {
+      body += groups.map((g, i) => `<div class="sec-h" style="margin-top:18px"><h2 style="font-size:22px">${esc(g.title)}</h2>${g.list.length > 8 ? `<a class="more" href="${link({ g: String(i) })}">الكل (${num(g.list.length)}) ←</a>` : ""}</div>
+        <div class="plgrid">${g.list.slice(0, 8).map(playlistCard).join("")}</div>`).join("");
+      body += `<h2 class="grp-h">أحدث المرئيات</h2>` + list(vids);
+    }
   }
 
   const links = [
@@ -390,9 +400,9 @@ async function viewWeek(u, no) {
 function viewVideos() {
   const progs = S.programs.filter((p) => playlistsOf(p.id).length);
   return `<div class="page-h"><h1>المرئيات</h1><p>دروس البرامج على يوتيوب مرتّبةً في سلاسلها، والمقاطع المنشورة في القنوات.</p></div>
-    ${progs.map((p) => groupPlaylists(p, playlistsOf(p.id)).map((g) => `
-      <section class="sec"><div class="sec-h"><h2>${esc(g.title || p.title)}</h2><a class="more" href="#/p/${enc(p.id)}?tab=videos">${esc(p.title)}</a></div>
-      <div class="plgrid">${g.list.map(playlistCard).join("")}</div></section>`).join("")).join("")}
+    ${progs.map((p) => groupPlaylists(p, playlistsOf(p.id)).map((g, gi) => `
+      <section class="sec"><div class="sec-h"><h2>${esc(g.title || p.title)}</h2><a class="more" href="#/p/${enc(p.id)}?tab=videos&g=${gi}">الكل (${num(g.list.length)}) ←</a></div>
+      <div class="plgrid">${g.list.slice(0, 8).map(playlistCard).join("")}</div></section>`).join("")).join("")}
     <section class="sec"><div class="sec-h"><h2>أحدث المرئيات</h2></div>${list(S.yt.items)}</section>
     ${S.tg.videos.length ? `<section class="sec"><div class="sec-h"><h2>مقاطع منشورة في القنوات</h2></div>${list(S.tg.videos)}</section>` : ""}`;
 }
