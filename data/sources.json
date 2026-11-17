@@ -75,6 +75,11 @@
         "PL0_RbP1FSCAnzRrkyhuWalTLsKcX2XcuF",
         "PL0_RbP1FSCAnzZ130xyfZ2RlNsFRyAoz5"
       ]
+    },
+    {
+      "channel_id": "UCf4bFQZ7h5w0yrr8o1JfKXQ",
+      "label": "يوتيوب: الموضوع الشهري",
+      "program": "monthly-topic"
     }
   ],
   "authored": {
@@ -111,5 +116,10 @@
       "tg:quraangroup/360",
       "tg:quraangroup/387"
     ]
-  }
+  },
+  "youtube_owners": [
+    "@C_avbm",
+    "@meabsarulislam"
+  ],
+  "_شرح_youtube_owners": "روابط يوتيوب المنشورة في تليجرام لا تُعرض إلا إن كانت من هذه القنوات (قنوات الشيخ)."
 }

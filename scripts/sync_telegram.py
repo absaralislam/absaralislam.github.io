@@ -252,6 +252,45 @@ def shift(iso, days):
 
 
 TITLES = os.path.join(OUTDIR, "yt_titles.json")
+AUTHORS = os.path.join(OUTDIR, "yt_authors.json")
+YT_FILE = os.path.join(ROOT, "data", "youtube.json")
+
+
+def load_json(path, default):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return default
+
+
+def youtube_owner_filter(items):
+    """لا يُعرض من روابط يوتيوب إلا مقاطع قنوات الشيخ: ما في youtube.json، أو ما كان صاحبه
+    (حسب oEmbed الرسمية) من youtube_owners في sources.json. غيرها يُعلَّم other فيُخفى."""
+    owners = set(load_json(SOURCES, {}).get("youtube_owners", []))
+    known = {i.get("youtube") for i in load_json(YT_FILE, {}).get("items", [])}
+    authors = load_json(AUTHORS, {})
+    asked = 0
+    for it in items.values():
+        vid = it.get("youtube")
+        if not vid:
+            continue
+        if vid not in known and vid not in authors and asked < 300:
+            asked += 1
+            try:
+                with urlopen(Request("https://www.youtube.com/oembed?format=json&url=https://www.youtube.com/watch?v=" + vid,
+                                     headers={"User-Agent": UA}), timeout=20) as r:
+                    authors[vid] = json.loads(r.read()).get("author_url", "").rsplit("/", 1)[-1]
+            except Exception:
+                authors[vid] = "(محذوف أو خاص)"
+            time.sleep(0.2)
+        mine = vid in known or authors.get(vid) in owners
+        if not mine and it["type"] == "video":
+            it["type"] = "other"
+        elif mine and it["type"] == "other":
+            it["type"] = "video"
+    if asked:
+        write_json(AUTHORS, authors)
 
 
 def youtube_titles(items):
@@ -298,7 +337,7 @@ def build_weeks(items):
             wk.setdefault("_p", Counter())[f"سورة {m.group(1)} " + re.sub(r"\s*[-–]\s*", " - ", m.group(2))] += 1
         if it["type"] == "file":
             wk["files"].append({k: it[k] for k in ("id", "title", "url", "size", "date") if it.get(k)})
-        elif it.get("youtube"):
+        elif it["type"] == "video" and it.get("youtube"):
             wk["videos"].append({"id": it["id"], "youtube": it["youtube"], "date": it["date"]})
     for wk in weeks.values():
         if wk.get("_p"):
@@ -414,6 +453,7 @@ def build_index(sources):
             continue
         organize(known, s.get("weeks", False))
         youtube_titles(known)
+        youtube_owner_filter(known)
         save_channel(u, known)
         items = sorted(known.values(), key=lambda i: i["n"], reverse=True)
         tags = Counter(t for it in items for t in it.get("tags", []))
