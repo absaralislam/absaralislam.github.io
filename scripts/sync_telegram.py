@@ -208,8 +208,8 @@ def authored(it):
     if _AUTH is None:
         with open(SOURCES, encoding="utf-8") as f:
             a = json.load(f).get("authored", {})
-        _AUTH = (set(a.get("ids", [])), [re.compile(p) for p in a.get("patterns", [])], a.get("markers", []))
-    ids, pats, marks = _AUTH
+        _AUTH = (set(a.get("ids", [])), [re.compile(p) for p in a.get("patterns", [])], a.get("markers", []), a.get("others", []))
+    ids, pats, marks, _ = _AUTH
     hay = it.get("text", "") + " " + it.get("doc", "").replace("_", " ")
     return it["id"] in ids or any(p.search(it["title"]) for p in pats) or any(m in hay for m in marks)
 
@@ -217,8 +217,11 @@ def authored(it):
 def classify(it):
     if it.get("doc", "").lower().endswith(".pdf"):
         it["type"] = "file" if FILE_RE.search(it["title"]) or FILE_RE.search(it["doc"].replace("_", " ")) else "book"
-        if it["type"] == "book" and not authored(it):
+        mine = authored(it)
+        if it["type"] == "book" and not mine:
             it["type"] = "other"  # كتاب لغير الشيخ نشره للفائدة: لا يُعرض في التطبيق إطلاقاً
+        elif it["type"] == "file" and not mine and any(o in it["title"] + " " + it["doc"].replace("_", " ") for o in _AUTH[3]):
+            it["type"] = "other"  # ملف أسبوعي من كتاب غيره (تفسير السعدي، المختصر…)
 
 
 def organize(items, weeks_on):
