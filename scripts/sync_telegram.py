@@ -31,6 +31,8 @@ RECHECK = 40     # في الوضع التدريجي نعيد فحص آخر N م�
 FILE_RE = re.compile(r"سورة\s+\S+.*?[\d٠-٩]+\s*[-–]\s*[\d٠-٩]+|مقرر\s+الحفظ|ال[أا]سبوع"
                      r"|^(?:فوائد|العمل\s+ب|معاني\s+كلمات|الوقف\s+والابتداء|تفريغ|جدول|اختبار|تفسير\s+سورة)\s*\S*\s*(?:سورة|آيات|الجزء|جزء|درس)?")
 SERIES_RE = [  # سلاسل الكتب: «لمحة تجويدية - …»، «الجزء العاشر من تفسير السعدي»
+    (re.compile(r"^(?!ملف)(?:.*(?:لمحة|لمحات)\s+تجويدية|.*التجويد|مخارج\s+الحروف|(?:صفة|صفات)\s+(?:الحروف|الاستفال)|أحكام\s+(?:الميم|النون|الراء|البسملة)|اللحن|الأحرف\s+السبعة)"), "دروس التجويد (لمحة تجويدية)"),
+    (re.compile(r"لطائف"), "لطائف السور"),
     (re.compile(r"من\s+تفسير\s+السعدي"), "تفسير السعدي (أجزاء)"),
     (re.compile(r"^(.{6,60}?)\s+[-ـ–]\s+"), None),
 ]
@@ -197,9 +199,26 @@ def to_item(m, username):
     return item
 
 
+_AUTH = None
+
+
+def authored(it):
+    """هل الكتاب من تأليف الشيخ؟ حسب قائمة authored في sources.json."""
+    global _AUTH
+    if _AUTH is None:
+        with open(SOURCES, encoding="utf-8") as f:
+            a = json.load(f).get("authored", {})
+        _AUTH = (set(a.get("ids", [])), [re.compile(p) for p in a.get("patterns", [])], a.get("markers", []))
+    ids, pats, marks = _AUTH
+    hay = it.get("text", "") + " " + it.get("doc", "").replace("_", " ")
+    return it["id"] in ids or any(p.search(it["title"]) for p in pats) or any(m in hay for m in marks)
+
+
 def classify(it):
     if it.get("doc", "").lower().endswith(".pdf"):
         it["type"] = "file" if FILE_RE.search(it["title"]) or FILE_RE.search(it["doc"].replace("_", " ")) else "book"
+        if it["type"] == "book" and not authored(it):
+            it["type"] = "file"   # كتاب لغير الشيخ نشره للفائدة: يبقى في ملفات البرنامج لا في قسم الكتب
 
 
 def organize(items, weeks_on):

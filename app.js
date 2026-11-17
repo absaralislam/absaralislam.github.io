@@ -186,7 +186,7 @@ function row(it, q, showThumb = it.type !== "article" || (!it.text && !!imgOf(it
 function programCard(p) {
   const posts = channelsOf(p.id).reduce((n, u) => n + S.tg.channels[u].count, 0);
   const vids = ytOf(p.id).length;
-  return `<a class="pcard" href="#/p/${enc(p.id)}">${STAR.replace("<svg", '<svg class="star"')}
+  return `<a class="pcard" href="#/p/${enc(p.id)}">
     <h3>${esc(p.title)}</h3>
     <p>${esc(p.description || "")}</p>
     <div class="meta">${posts ? `<span>${num(posts)} منشور</span>` : ""}${vids ? `<span>${num(vids)} مرئي</span>` : ""}</div>
@@ -245,9 +245,7 @@ function viewHome() {
   return `
   <section class="hero">
     <p class="pre">${esc(s.pre || "مكتبة الشيخ")}</p>
-    <h1>${esc(s.title || "أبصار الإسلام")}</h1>
-    <p class="cred">${esc(s.sheikh || "")}</p>
-    ${orn}
+    <h1>${esc(s.sheikh || "")}</h1>
     <p class="lede">${esc(s.lede || "")}</p>
     <form class="field" action="#/search" data-search>${I.search}<input name="q" type="search" placeholder="ابحث في الفوائد والمرئيات والكتب…" autocomplete="off"></form>
     <div class="stats">
@@ -431,7 +429,7 @@ function viewBooks(qs) {
   }
   const singles = books.filter((b) => !b.series);
   const cards = Object.entries(series).sort((a, b) => b[1].length - a[1].length).map(([name, lst]) =>
-    `<a class="pcard" href="#/books?s=${enc(name)}">${STAR.replace("<svg", '<svg class="star"')}<h3>${esc(name)}</h3>
+    `<a class="pcard" href="#/books?s=${enc(name)}"><h3>${esc(name)}</h3>
       <p>${esc(lst.slice(-3).map((b) => b.title.replace(name, "").replace(/^\s*[-ـ–]\s*/, "")).join("، "))}…</p>
       <div class="meta"><span>${num(lst.length)} رسالة</span></div></a>`).join("");
   return `<div class="page-h"><h1>الكتب</h1><p>مؤلفات الشيخ وسلاسله العلمية، وما أُخرج من ثمرات برامجه، وكلها قابلة للتحميل.</p></div>
@@ -550,7 +548,7 @@ const notFound = () => `<div class="empty">لم يُعثر على هذه الص�
 function renderFoot() {
   const s = S.site;
   const chans = Object.entries(S.tg.channels);
-  document.getElementById("foot").innerHTML = `${orn}
+  document.getElementById("foot").innerHTML = `
     <div>${esc(s.name || "")} — ${esc(s.sheikh || "")}</div>
     <div class="links">${chans.map(([u, c]) => `<a href="https://t.me/${esc(u)}" target="_blank" rel="noopener">${esc(c.label)}</a>`).join("")}
     ${S.programs.filter((p) => okUrl(p.youtube)).map((p) => `<a href="${esc(p.youtube)}" target="_blank" rel="noopener">يوتيوب: ${esc(p.title)}</a>`).join("")}</div>

@@ -1,9 +1,9 @@
 /* مكتبة الشيخ أبصار الإسلام — ورق تراثي وحبر وأخضر عميق.
-   Amiri للعناوين، وNoto Naskh Arabic للنصوص. خطوط رفيعة بدل الظلال. */
+   Noto Naskh Arabic للعناوين والنصوص (يضع همزة «لإ» في موضعها الصحيح). خطوط رفيعة بدل الظلال. */
 
 :root {
-  --f-head: "Amiri", "Noto Naskh Arabic", serif;
-  --f-text: "Noto Naskh Arabic", "Amiri", serif;
+  --f-head: "Noto Naskh Arabic", serif;
+  --f-text: "Noto Naskh Arabic", serif;
 
   --paper: #F4EDE0;
   --surface: #FBF8F2;
@@ -102,9 +102,8 @@ svg.i { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: n
 
 /* ---------- hero ---------- */
 .hero { padding: 36px 0 28px; border-bottom: 1px solid var(--line); text-align: center; }
-.hero .pre { margin: 0; font-size: 18px; color: var(--mute); }
-.hero h1 { font-size: clamp(34px, 8vw, 58px); line-height: 1.25; margin: 2px 0 6px; }
-.hero .cred { margin: 0; font-size: 18px; color: var(--acc); font-weight: 700; }
+.hero .pre { margin: 0; font-size: 19px; color: var(--mute); }
+.hero h1 { font-size: clamp(24px, 7.4vw, 52px); line-height: 1.45; margin: 4px 0 4px; color: var(--acc); text-wrap: balance; }
 .hero .lede { margin: 10px auto 0; max-width: 56ch; color: var(--ink-2); font-size: 17px; }
 .field {
   display: flex; align-items: center; gap: 10px; padding: 0 14px; height: 50px; margin: 22px auto 0; max-width: 560px;
@@ -140,7 +139,6 @@ svg.i { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: n
 .pcard h3 { font-size: 22px; }
 .pcard p { margin: 0; color: var(--ink-2); font-size: 15px; line-height: 1.7; }
 .pcard .meta { margin-top: auto; padding-top: 8px; }
-.pcard .star { position: absolute; inset-inline-end: 14px; top: 14px; width: 22px; height: 22px; fill: var(--gold); opacity: .55; }
 
 /* ---------- rows / cards ---------- */
 .rows { display: grid; gap: 10px; }
@@ -191,7 +189,7 @@ svg.i { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: n
 .read-h .meta { font-size: 14px; margin-top: 6px; }
 .prose { font-size: var(--fs); line-height: 2.05; white-space: pre-wrap; overflow-wrap: anywhere; }
 .prose a { color: var(--acc); text-decoration: underline; text-underline-offset: 3px; }
-.prose .ayah { font-family: "Amiri", serif; color: var(--ayah); font-weight: 700; }
+.prose .ayah { color: var(--ayah); font-weight: 700; }
 .prose .hadith { color: var(--hadith); }
 .paper { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px 20px 18px; }
 @media (max-width: 520px) { .paper { padding: 16px 14px; border-inline: 0; border-radius: 0; margin-inline: -16px; } }

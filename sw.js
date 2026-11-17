@@ -1,10 +1,10 @@
 // عامل الخدمة: الواجهة تُخزَّن مسبقاً، والبيانات تُجلب من الشبكة أولاً مع نسخة احتياطية للعمل دون اتصال
-const VERSION = "v4";
+const VERSION = "v5";
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 const SHELL_FILES = [
   "./", "index.html", "styles.css", "app.js", "manifest.webmanifest",
-  "icons/icon.svg", "icons/star.svg", "icons/icon-192.png", "icons/icon-512.png",
+  "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
 ];
 
 self.addEventListener("install", (e) => {

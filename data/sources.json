@@ -1,13 +1,42 @@
 {
   "_شرح": "مصادر المزامنة التلقائية. username لقناة تليجرام العامة بلا @، وprogram يربطها ببرنامج في library.json. playlists قوائم يوتيوب تُتابَع عبر RSS عند عدم وجود مفتاح API.",
   "telegram": [
-    { "username": "quraangroup",    "label": "حفظ القرآن بطريقة السلف",              "program": "hifz", "weeks": true },
-    { "username": "tadabbor111",    "label": "ختمة التفسير والتدبر",                  "program": "tadabbor" },
-    { "username": "fawaid_alsiar",  "label": "ينابيع الارتواء من سير أعلام النبلاء", "program": "siar" },
-    { "username": "abusalehabsar",  "label": "مقتطفات من سير أعلام النبلاء",         "program": "siar" },
-    { "username": "absarulislam",   "label": "الموضوع الشهري",                        "program": "monthly-topic" },
-    { "username": "absarulislam2",  "label": "الكتاب الشهري",                         "program": "monthly-book" },
-    { "username": "absarulislam1",  "label": "قناة أبصار الإسلام",                    "program": "personal" }
+    {
+      "username": "quraangroup",
+      "label": "حفظ القرآن بطريقة السلف",
+      "program": "hifz",
+      "weeks": true
+    },
+    {
+      "username": "tadabbor111",
+      "label": "ختمة التفسير والتدبر",
+      "program": "tadabbor"
+    },
+    {
+      "username": "fawaid_alsiar",
+      "label": "ينابيع الارتواء من سير أعلام النبلاء",
+      "program": "siar"
+    },
+    {
+      "username": "abusalehabsar",
+      "label": "مقتطفات من سير أعلام النبلاء",
+      "program": "siar"
+    },
+    {
+      "username": "absarulislam",
+      "label": "الموضوع الشهري",
+      "program": "monthly-topic"
+    },
+    {
+      "username": "absarulislam2",
+      "label": "الكتاب الشهري",
+      "program": "monthly-book"
+    },
+    {
+      "username": "absarulislam1",
+      "label": "قناة أبصار الإسلام",
+      "program": "personal"
+    }
   ],
   "youtube": [
     {
@@ -15,17 +44,72 @@
       "label": "يوتيوب: حفظ القرآن بطريقة السلف",
       "program": "hifz",
       "playlists": [
-        "PL0_RbP1FSCAk2K1423uadLqGjhhWwhoVI", "PL0_RbP1FSCAkCm2aLqoFNDn2JiZftZbSV", "PL0_RbP1FSCAkCv7Fy3aGfNh4J2PYo2ZEm",
-        "PL0_RbP1FSCAkOeBY3ymLg61H50Q6iV4k4", "PL0_RbP1FSCAka4GAMcG3t2yC2HJX35ph8", "PL0_RbP1FSCAkrhvIRV5qpTt_OJwJuNHko",
-        "PL0_RbP1FSCAl--5-G1YWvYR0T-EeV5eEs", "PL0_RbP1FSCAl7YQY9wfie7WQ3ykXYaUaH", "PL0_RbP1FSCAlCng1AX2EfYXHExXXUBAvH",
-        "PL0_RbP1FSCAlG2DXKbre1d-h7p89LrWPW", "PL0_RbP1FSCAlHV02Iz7A-cpwWRPwTGYzP", "PL0_RbP1FSCAlImJW-grIHnKR-tTDYOQc9",
-        "PL0_RbP1FSCAlJ7i1V56m8QDRJToJ0d_l8", "PL0_RbP1FSCAlf7xCCOcVWO6MhrMY8ovdI", "PL0_RbP1FSCAlwrSwP4lOdKl1wDBH81DlA",
-        "PL0_RbP1FSCAm22N2K_6Zoq3W3U2-HY38K", "PL0_RbP1FSCAmJEjbsuagTICDhnHUC7feo", "PL0_RbP1FSCAmTk2tVU9SZB7Ct19iMIu36",
-        "PL0_RbP1FSCAmjDD9zag7eoV5X72VQFx-_", "PL0_RbP1FSCAmysjHDRern7pJjAZpNUrkp", "PL0_RbP1FSCAn3j0HxAOrAlH8LIOr08goH",
-        "PL0_RbP1FSCAn5qM2eE_jirabwqZ5o0FBR", "PL0_RbP1FSCAnJaCEZcZlu_FMxJ0q2Tsbo", "PL0_RbP1FSCAnP7VnYsM7Zderdy-nBQZWw",
-        "PL0_RbP1FSCAnRE0X3Qu5OAtb7g3dPEyQt", "PL0_RbP1FSCAnSdYlRWkbb00nymfCDLYaQ", "PL0_RbP1FSCAnWkfw3CGH6YJ8-ROmUHoE9",
-        "PL0_RbP1FSCAnwVbCT1QPV7GP8_3tLKBev", "PL0_RbP1FSCAnzRrkyhuWalTLsKcX2XcuF", "PL0_RbP1FSCAnzZ130xyfZ2RlNsFRyAoz5"
+        "PL0_RbP1FSCAk2K1423uadLqGjhhWwhoVI",
+        "PL0_RbP1FSCAkCm2aLqoFNDn2JiZftZbSV",
+        "PL0_RbP1FSCAkCv7Fy3aGfNh4J2PYo2ZEm",
+        "PL0_RbP1FSCAkOeBY3ymLg61H50Q6iV4k4",
+        "PL0_RbP1FSCAka4GAMcG3t2yC2HJX35ph8",
+        "PL0_RbP1FSCAkrhvIRV5qpTt_OJwJuNHko",
+        "PL0_RbP1FSCAl--5-G1YWvYR0T-EeV5eEs",
+        "PL0_RbP1FSCAl7YQY9wfie7WQ3ykXYaUaH",
+        "PL0_RbP1FSCAlCng1AX2EfYXHExXXUBAvH",
+        "PL0_RbP1FSCAlG2DXKbre1d-h7p89LrWPW",
+        "PL0_RbP1FSCAlHV02Iz7A-cpwWRPwTGYzP",
+        "PL0_RbP1FSCAlImJW-grIHnKR-tTDYOQc9",
+        "PL0_RbP1FSCAlJ7i1V56m8QDRJToJ0d_l8",
+        "PL0_RbP1FSCAlf7xCCOcVWO6MhrMY8ovdI",
+        "PL0_RbP1FSCAlwrSwP4lOdKl1wDBH81DlA",
+        "PL0_RbP1FSCAm22N2K_6Zoq3W3U2-HY38K",
+        "PL0_RbP1FSCAmJEjbsuagTICDhnHUC7feo",
+        "PL0_RbP1FSCAmTk2tVU9SZB7Ct19iMIu36",
+        "PL0_RbP1FSCAmjDD9zag7eoV5X72VQFx-_",
+        "PL0_RbP1FSCAmysjHDRern7pJjAZpNUrkp",
+        "PL0_RbP1FSCAn3j0HxAOrAlH8LIOr08goH",
+        "PL0_RbP1FSCAn5qM2eE_jirabwqZ5o0FBR",
+        "PL0_RbP1FSCAnJaCEZcZlu_FMxJ0q2Tsbo",
+        "PL0_RbP1FSCAnP7VnYsM7Zderdy-nBQZWw",
+        "PL0_RbP1FSCAnRE0X3Qu5OAtb7g3dPEyQt",
+        "PL0_RbP1FSCAnSdYlRWkbb00nymfCDLYaQ",
+        "PL0_RbP1FSCAnWkfw3CGH6YJ8-ROmUHoE9",
+        "PL0_RbP1FSCAnwVbCT1QPV7GP8_3tLKBev",
+        "PL0_RbP1FSCAnzRrkyhuWalTLsKcX2XcuF",
+        "PL0_RbP1FSCAnzZ130xyfZ2RlNsFRyAoz5"
       ]
     }
-  ]
+  ],
+  "authored": {
+    "_شرح": "قسم الكتب لا يعرض إلا مؤلفات الشيخ. يُعدّ الكتاب من تأليفه إن طابق عنوانه أحد patterns، أو كان رقمه في ids، أو ورد في نص منشوره أو اسم ملفه ما في markers. غير ذلك يُعرض في تبويب «الملفات» داخل برنامجه.",
+    "patterns": [
+      "^لمحة تجويدية",
+      "^لمحات تجويدية",
+      "^درر تفسيرية",
+      "^مذكرة جزء",
+      "^كيف تراجع القرآن"
+    ],
+    "markers": [
+      "من ثمرات برنامج",
+      "بقلم أبصار الإسلام",
+      "الشيخ الدكتور أبصار الإسلام",
+      "بقلم: د. أبصار الإسلام"
+    ],
+    "ids": [
+      "tg:quraangroup/5683",
+      "tg:quraangroup/1876",
+      "tg:quraangroup/1280",
+      "tg:quraangroup/1216",
+      "tg:quraangroup/1107",
+      "tg:quraangroup/1075",
+      "tg:quraangroup/1042",
+      "tg:quraangroup/1023",
+      "tg:quraangroup/967",
+      "tg:quraangroup/932",
+      "tg:quraangroup/900",
+      "tg:quraangroup/880",
+      "tg:quraangroup/1240",
+      "tg:quraangroup/1021",
+      "tg:quraangroup/728",
+      "tg:quraangroup/360",
+      "tg:quraangroup/387"
+    ]
+  }
 }
