@@ -66,6 +66,9 @@ const I = {
   yt: '<svg class="i" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z"/></svg>',
   down: '<svg class="i" viewBox="0 0 24 24"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"/></svg>',
   back: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  pin: '<svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  play: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg>',
+  arrow: '<svg class="i" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
   search: '<svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
 };
 const STAR = '<svg viewBox="0 0 100 100"><path d="M50 4l11 23 25-6-6 25 16 4-16 4 6 25-25-6-11 23-11-23-25 6 6-25L3 50l16-4-6-25 25 6z"/></svg>';
@@ -80,6 +83,7 @@ async function boot() {
   S.site = lib.site || {};
   S.programs = lib.programs || [];
   S.fawaid = lib.fawaid || [];
+  S.cv = lib.cv || [];
   S.manual = lib.items || [];
   S.tg = { shard: tg.shard || 500, channels: tg.channels || {}, books: tg.books || [], videos: tg.videos || [] };
   S.yt = { playlists: yt.playlists || [], items: yt.items || [], sources: yt.site?.sources || {} };
@@ -288,7 +292,56 @@ function viewHome() {
   ${books.length ? `<section class="sec">
     <div class="sec-h"><h2>الكتب</h2><a class="more" href="#/books">كل الكتب ←</a></div>
     <div class="rows two">${books.map((i) => row(i)).join("")}</div>
-  </section>` : ""}`;
+  </section>` : ""}
+  ${S.cv.length ? cvSection(S.cv) : ""}`;
+}
+
+/* ================= السيرة الذاتية (ثلاثية الأبعاد) ================= */
+const arN = (n) => String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function cvLinks(e) {
+  return (e.links || []).map((l) => {
+    const href = l.href || (l.id ? "#/i/" + enc(l.id) : "");
+    const ext = /^https?:/.test(href);
+    return href ? `<li><a href="${esc(href)}"${ext ? ' target="_blank" rel="noopener"' : ""}>${l.id?.startsWith("yt:") || /youtube/.test(href) ? I.play : I.arrow}<span>${esc(l.t)}</span></a></li>` : "";
+  }).join("");
+}
+window.__cvLinks = cvLinks;
+function cvSection(cv) {
+  const n = cv.length, e = cv[0];
+  after.push(() => bootCV());
+  return `<section class="cv" id="cv" style="height:${Math.round(n * 42 + 40)}svh" aria-labelledby="cv-title">
+    <div class="cv-pin">
+      <canvas aria-hidden="true"></canvas>
+      <div class="cv-head"><h2 id="cv-title">السيرة الذاتية</h2></div>
+      <div class="cv-panel" aria-live="polite"><div class="in"><div class="y">${esc(e.year)}</div><h3>${esc(e.title)}</h3><div class="pl"${e.place ? "" : " hidden"}>${I.pin}<span>${esc(e.place || "")}</span></div><p>${esc(e.text || "")}</p><ul class="lk">${cvLinks(e)}</ul></div></div>
+      <ol class="cv-rail" aria-label="محطات السيرة">${cv.map((x, i) => `<li><button type="button" data-go="${i}" aria-current="${i === 0}" aria-label="${esc(x.year + " — " + x.title)}"><span class="yr">${esc(x.year)}</span></button></li>`).join("")}</ol>
+      <div class="cv-count" aria-hidden="true"><span><b id="cv-n">١</b> / ${arN(n)}</span><span class="cv-bar"><i id="cv-bar"></i></span><span>مرّر للأسفل</span></div>
+    </div>
+  </section>`;
+}
+function cvFallback(root, cv) {
+  root.classList.add("static"); root.style.height = "auto";
+  root.querySelector(".cv-pin").innerHTML = `<div class="wrap"><div class="cv-head" style="position:static;padding-top:40px"><h2>السيرة الذاتية</h2></div>
+   <ol class="cv-fallback">${cv.map((e) => `<li><b>${esc(e.year)}</b><h3>${esc(e.title)}</h3>${e.place ? `<p>${esc(e.place)}</p>` : ""}<p>${esc(e.text || "")}</p><ul class="lk">${cvLinks(e)}</ul></li>`).join("")}</ol></div>`;
+}
+function bootCV() {
+  const root = document.getElementById("cv"), cv = S.cv;
+  if (!root) return;
+  let destroyed = false, handle = null;
+  onCleanup(() => { destroyed = true; handle?.destroy(); });
+  const io = new IntersectionObserver(async (ents) => {
+    if (!ents.some((e) => e.isIntersecting)) return;
+    io.disconnect();
+    try {
+      const mod = await import("./cv3d.js");
+      if (destroyed) return;
+      handle = await mod.mountCV(root, cv, { reduced });
+      if (destroyed) handle?.destroy(); else if (!handle) cvFallback(root, cv);
+    } catch (err) { console.warn(err); if (!destroyed) cvFallback(root, cv); }
+  }, { rootMargin: "700px 0px" });
+  io.observe(root);
+  onCleanup(() => io.disconnect());
 }
 
 function viewPrograms() {
@@ -603,6 +656,8 @@ function renderFoot() {
 
 /* ================= الموجّه ================= */
 let token = 0;
+let cleanups = [];
+const onCleanup = (f) => cleanups.push(f);
 // سجلّ التنقل داخل التطبيق: زر «رجوع» يعود للصفحة السابقة إن وُجدت، وإلا ذهب للبرنامج
 const trail = [location.hash];
 window.addEventListener("hashchange", () => {
@@ -612,6 +667,7 @@ window.addEventListener("hashchange", () => {
 async function render() {
   const my = ++token;
   after.length = 0;
+  cleanups.splice(0).forEach((f) => { try { f(); } catch {} });
   const hash = location.hash.replace(/^#/, "") || "/";
   const [path, qstr] = hash.split("?");
   const qs = new URLSearchParams(qstr || "");
@@ -693,6 +749,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
   const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
   root.dataset.theme = dark ? "light" : "dark";
   store.set("theme", root.dataset.theme);
+  document.dispatchEvent(new Event("themechange"));
 });
 
 window.addEventListener("hashchange", render);

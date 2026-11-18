@@ -214,10 +214,21 @@ def authored(it):
     return it["id"] in ids or any(p.search(it["title"]) for p in pats) or any(m in hay for m in marks)
 
 
+_OVR = None
+
+
 def classify(it):
+    global _OVR
+    if _OVR is None:
+        with open(SOURCES, encoding="utf-8") as f:
+            _OVR = {k: v for k, v in json.load(f).get("authored", {}).get("overrides", {}).items() if not k.startswith("_")}
+    if it["id"] in _OVR:  # تصحيح يدوي للعنوان أو النص
+        it.update(_OVR[it["id"]])
     if it.get("doc", "").lower().endswith(".pdf"):
         it["type"] = "file" if FILE_RE.search(it["title"]) or FILE_RE.search(it["doc"].replace("_", " ")) else "book"
         mine = authored(it)
+        if mine and it["id"] in _AUTH[0]:
+            it["type"] = "book"   # مؤلَّف معتمد بالاسم: كتاب دائماً ولو شابه عنوانُه الملفاتِ الأسبوعية
         if it["type"] == "book" and not mine:
             it["type"] = "other"  # كتاب لغير الشيخ نشره للفائدة: لا يُعرض في التطبيق إطلاقاً
         elif it["type"] == "file" and not mine and any(o in it["title"] + " " + it["doc"].replace("_", " ") for o in _AUTH[3]):
