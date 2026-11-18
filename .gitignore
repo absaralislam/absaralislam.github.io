@@ -3,3 +3,4 @@
 *.tmp
 *.small.jpg
 __pycache__/
+/*.pdf
