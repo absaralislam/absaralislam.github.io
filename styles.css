@@ -237,3 +237,9 @@ mark { background: color-mix(in srgb, var(--gold) 30%, transparent); color: inhe
 .field .clear { color: var(--mute); padding: 4px 6px; }
 .chips.wrap { flex-wrap: wrap; overflow: visible; }
 .prog-h { font-size: 30px; margin: 30px 0 0; padding-top: 18px; border-top: 1px solid var(--line); color: var(--acc); }
+
+/* شريط أعلى صفحة القراءة: رجوع + حجم الخط */
+.read-bar { position: sticky; top: calc(var(--top-h) + env(safe-area-inset-top)); z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0 6px; background: var(--paper); }
+.read-bar .btn.back { padding: 5px 12px; }
+.read-bar .fsz button { padding: 5px 14px; font-size: 17px; font-weight: 700; }
+.read-h { padding-top: 6px; }

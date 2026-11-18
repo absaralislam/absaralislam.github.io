@@ -1,5 +1,5 @@
 // عامل الخدمة: الواجهة تُخزَّن مسبقاً، والبيانات تُجلب من الشبكة أولاً مع نسخة احتياطية للعمل دون اتصال
-const VERSION = "v9";
+const VERSION = "v10";
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 const SHELL_FILES = [

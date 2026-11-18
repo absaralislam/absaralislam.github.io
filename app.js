@@ -65,6 +65,7 @@ const I = {
   tg: '<svg class="i" viewBox="0 0 24 24"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/><path d="M9 13l12-9"/></svg>',
   yt: '<svg class="i" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z"/></svg>',
   down: '<svg class="i" viewBox="0 0 24 24"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"/></svg>',
+  back: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   search: '<svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
 };
 const STAR = '<svg viewBox="0 0 100 100"><path d="M50 4l11 23 25-6-6 25 16 4-16 4 6 25-25-6-11 23-11-23-25 6 6-25L3 50l16-4-6-25 25 6z"/></svg>';
@@ -503,6 +504,10 @@ async function viewItem(id) {
   });
   const hij = fmtHijri(it.date);
   return `<article class="read">
+    <div class="read-bar">
+      <a class="btn back" href="#/" data-back>${I.back} رجوع</a>
+      ${text ? `<span class="fsz"><button type="button" data-fs="-1" aria-label="تصغير الخط">أ−</button><button type="button" data-fs="1" aria-label="تكبير الخط">أ+</button></span>` : ""}
+    </div>
     <header class="read-h">
       <div class="crumb">${p ? `<a href="#/p/${enc(p.id)}${it.youtube && !u ? "?tab=videos" : ""}">${esc(p.title)}</a>` : ""}${u && S.tg.channels[u] && channelsOf(p?.id).length > 1 ? ` ‹ <a href="#/p/${enc(p.id)}?tab=posts&ch=${enc(u)}">${esc(S.tg.channels[u].label)}</a>` : ""}</div>
       <h1>${esc(it.title)}</h1>
@@ -511,7 +516,6 @@ async function viewItem(id) {
     ${media}
     ${text ? `<div class="paper"><div class="prose">${fmt(text)}</div></div>` : ""}
     <div class="actions">${btns.join("")}
-      ${text ? `<span class="fsz" style="margin-inline-start:auto"><button type="button" data-fs="-1" aria-label="تصغير الخط">أ−</button><button type="button" data-fs="1" aria-label="تكبير الخط">أ+</button></span>` : ""}
     </div>
     <nav class="pager" id="pager"></nav>
   </article>`;
@@ -599,6 +603,12 @@ function renderFoot() {
 
 /* ================= الموجّه ================= */
 let token = 0;
+// سجلّ التنقل داخل التطبيق: زر «رجوع» يعود للصفحة السابقة إن وُجدت، وإلا ذهب للبرنامج
+const trail = [location.hash];
+window.addEventListener("hashchange", () => {
+  if (trail.length > 1 && trail[trail.length - 2] === location.hash) trail.pop();
+  else trail.push(location.hash);
+});
 async function render() {
   const my = ++token;
   after.length = 0;
@@ -655,6 +665,12 @@ $app.addEventListener("submit", (e) => {
 
 $app.addEventListener("click", async (e) => {
   if (e.target.closest("[data-clear]")) { e.preventDefault(); setQ(""); return; }
+  if (e.target.closest("[data-back]")) {
+    e.preventDefault();
+    if (trail.length > 1) history.back();
+    else location.hash = $app.querySelector(".read-h .crumb a")?.getAttribute("href") || "#/";
+    return;
+  }
   const fs = e.target.closest("[data-fs]");
   if (fs) {
     const cur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fs")) || 19;
