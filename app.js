@@ -698,4 +698,23 @@ document.getElementById("themeBtn").addEventListener("click", () => {
 window.addEventListener("hashchange", render);
 boot().then(render);
 
+/* همزة «الإسلام»: الخطوط تضع همزة «لإ» تحت ضلعها الأيسر، فنكتب «لا» ونرسم الهمزة تحت طرفها الأيمن.
+   تُطبَّق على كل نص يظهر في الصفحة (لا على حقول الإدخال)، والكلمة لا تنكسر بين سطرين. */
+const ISLAM = /الإسلام/g, HAS_ISLAM = /الإسلام/;
+function fixHamza(root) {
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (HAS_ISLAM.test(n.nodeValue) && !n.parentElement.closest("script,style,textarea,input,title,.isl") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
+  });
+  const nodes = [];
+  while (w.nextNode()) nodes.push(w.currentNode);
+  for (const n of nodes) {
+    const span = document.createElement("span");
+    span.innerHTML = esc(n.nodeValue).replace(ISLAM, '<span class="isl" title="الإسلام">ا<span class="lx">لا</span>سلام</span>');
+    n.replaceWith(...span.childNodes);
+  }
+}
+fixHamza(document.body);
+new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1) fixHamza(n); else if (n.nodeType === 3 && n.parentNode) fixHamza(n.parentNode); })
+  .observe(document.body, { childList: true, subtree: true });
+
 if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(() => {});

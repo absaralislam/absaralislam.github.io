@@ -243,3 +243,8 @@ mark { background: color-mix(in srgb, var(--gold) 30%, transparent); color: inhe
 .read-bar .btn.back { padding: 5px 12px; }
 .read-bar .fsz button { padding: 5px 14px; font-size: 17px; font-weight: 700; }
 .read-h { padding-top: 6px; }
+
+/* همزة «الإسلام» تحت الطرف الأيمن من «لا» (انظر fixHamza في app.js) */
+.isl { white-space: nowrap; }
+.lx { position: relative; display: inline-block; }
+.lx::after { content: "ء"; position: absolute; font-size: .42em; line-height: 1; right: .02em; top: 56%; pointer-events: none; }

@@ -2,13 +2,20 @@ name: مزامنة تليجرام ويوتيوب
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # كل نصف ساعة
+    - cron: "*/30 * * * *"   # كل نصف ساعة: تليجرام + آخر مقاطع يوتيوب
+    - cron: "17 */6 * * *"   # كل 6 ساعات: يوتيوب كاملاً مع قوائم التشغيل
   workflow_dispatch:
     inputs:
       full:
         description: "جلب أرشيف تليجرام كاملاً"
         type: boolean
         default: false
+      youtube_full:
+        description: "مزامنة قوائم يوتيوب كاملة"
+        type: boolean
+        default: false
+  repository_dispatch:
+    types: [telegram]          # إشارة فورية من الخارج عند نشر جديد في تليجرام
 
 permissions:
   contents: write
@@ -38,7 +45,7 @@ jobs:
       - name: يوتيوب
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: python3 scripts/sync_youtube.py
+        run: python3 scripts/sync_youtube.py ${{ (github.event.schedule == '17 */6 * * *' || inputs.youtube_full) && '' || '--quick' }}
 
       - name: حفظ التغييرات
         run: |
@@ -49,5 +56,6 @@ jobs:
             echo "لا جديد"
           else
             git commit -m "مزامنة المحتوى $(date -u +%Y-%m-%dT%H:%MZ)"
+            git pull --rebase --quiet origin main
             git push
           fi

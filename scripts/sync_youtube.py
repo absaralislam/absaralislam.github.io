@@ -45,9 +45,9 @@ def api(path, **q):
     return json.loads(get(f"https://www.googleapis.com/youtube/v3/{path}?" + urlencode(q)))
 
 
-def api_all(path, **q):
+def api_all(path, max_pages=10**6, **q):
     token = ""
-    while True:
+    for _ in range(max_pages):
         d = api(path, **q, **({"pageToken": token} if token else {}))
         yield from d.get("items", [])
         token = d.get("nextPageToken")
@@ -55,10 +55,13 @@ def api_all(path, **q):
             return
 
 
+QUICK = "--quick" in sys.argv   # سريع: آخر 50 مقطعاً فقط (وحدة واحدة من الحصة)، دون قوائم التشغيل
+
+
 # ---------- API ----------
-def api_playlist(pid):
+def api_playlist(pid, max_pages=10**6):
     out = []
-    for it in api_all("playlistItems", part="snippet,contentDetails", playlistId=pid, maxResults=50):
+    for it in api_all("playlistItems", max_pages=max_pages, part="snippet,contentDetails", playlistId=pid, maxResults=50):
         sn, cd = it["snippet"], it.get("contentDetails", {})
         vid = cd.get("videoId") or sn.get("resourceId", {}).get("videoId")
         if not vid or sn.get("title") in ("Private video", "Deleted video"):
@@ -69,6 +72,8 @@ def api_playlist(pid):
 
 
 def api_channel(cid):
+    if QUICK:
+        return api_playlist("UU" + cid[2:], max_pages=1), []
     uploads = api_playlist("UU" + cid[2:])
     pls = [{"id": p["id"], "title": p["snippet"]["title"]}
            for p in api_all("playlists", part="snippet", channelId=cid, maxResults=50)]
@@ -89,7 +94,7 @@ def rss(**q):
 def rss_channel(cid, playlist_ids):
     _, uploads = rss(channel_id=cid)
     pls = []
-    for pid in playlist_ids:
+    for pid in ([] if QUICK else playlist_ids):
         try:
             title, vids = rss(playlist_id=pid)
             pls.append({"id": pid, "title": title, "videos": vids, "partial": True})
