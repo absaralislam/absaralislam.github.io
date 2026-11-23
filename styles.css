@@ -291,3 +291,4 @@ mark { background: color-mix(in srgb, var(--gold) 30%, transparent); color: inhe
 }
 
 [hidden] { display: none !important; }
+.player { display: block; width: 100%; margin: 0 0 14px; }

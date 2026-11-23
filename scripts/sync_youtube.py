@@ -135,6 +135,7 @@ def main():
             it.update({k: val for k, val in v.items() if val and k != "id"})
             it.update({"id": key, "type": "video", "youtube": v["id"], "source": src,
                        "thumb": f"https://i.ytimg.com/vi/{v['id']}/hqdefault.jpg",
+                       "image_url": f"https://i.ytimg.com/vi/{v['id']}/hqdefault.jpg",
                        "url": f"https://www.youtube.com/watch?v={v['id']}"})
             if program:
                 it["program"] = program
@@ -164,6 +165,7 @@ def main():
 
     data = {
         "_generated": "يُولَّد تلقائياً بواسطة scripts/sync_youtube.py — لا تعدّله يدوياً",
+        "schema_version": 1,
         "site": {"sources": labels},
         "playlists": sorted(playlists.values(), key=lambda p: p["title"]),
         "items": sorted(items.values(), key=lambda i: i.get("date", ""), reverse=True),

@@ -473,9 +473,9 @@ async function viewWeek(u, no) {
   const pls = weekPls(no);
   const idx = ch.weeks.indexOf(w);
   const prev = ch.weeks[idx + 1], next = ch.weeks[idx - 1];
-  const fileRow = (f) => `<a class="row" href="${esc(okUrl(f.url))}" target="_blank" rel="noopener">
+  const fileRow = (f) => `<a class="row" href="${esc(okUrl(f.file_url) || okUrl(f.url))}" target="_blank" rel="noopener">
       <div class="th book">${I.file}</div>
-      <div class="bd"><h3>${esc(f.title)}</h3><div class="meta"><span class="k">PDF</span>${f.size ? `<span>${esc(f.size)}</span>` : ""}<span>تحميل من تليجرام ←</span></div></div></a>`;
+      <div class="bd"><h3>${esc(f.title)}</h3><div class="meta"><span class="k">PDF</span>${f.size ? `<span>${esc(f.size)}</span>` : ""}<span>${okUrl(f.file_url) ? "فتح الملف ←" : "تحميل من تليجرام ←"}</span></div></div></a>`;
   return `<div class="page-h">
       <div class="crumb">${p ? `<a href="#/p/${enc(p.id)}?tab=weeks">${esc(p.title)}</a> ‹ ` : ""}الأسابيع ‹</div>
       <h1>${esc(weekTitle(w))}</h1>
@@ -540,13 +540,18 @@ async function viewItem(id) {
   const u = chOf(it);
   let media = "";
   if (it.youtube) media = `<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/${enc(it.youtube)}?rel=0" title="${esc(it.title)}" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+  else if (it.type === "audio" && okUrl(it.file_url)) media = `<audio class="player" controls preload="metadata" src="${esc(it.file_url)}"></audio>`;
   else if (imgOf(it)) media = `<img class="photo" src="${esc(imgOf(it))}" alt="" loading="lazy" onerror="this.remove()">`;
   const text = it.text || it.summary || "";
   const btns = [];
-  if ((it.type === "book" || it.type === "file") && okUrl(it.url)) btns.push(`<a class="btn pri" href="${esc(it.url)}" target="_blank" rel="noopener">${I.down} تحميل ${it.type === "book" ? "الكتاب" : "الملف"}${it.size ? ` (${esc(it.size)})` : ""}</a>`);
+  const isDoc = it.type === "book" || it.type === "file" || it.type === "audio";
+  const what = { book: "الكتاب", file: "الملف", audio: "الصوت" }[it.type];
+  // الملف من R2 أولاً (يعمل حيث تليجرام محجوب)، وتليجرام احتياطاً
+  if (isDoc && okUrl(it.file_url)) btns.push(`<a class="btn pri" href="${esc(it.file_url)}" target="_blank" rel="noopener">${I.down} ${it.type === "audio" ? "تحميل" : "فتح"} ${what}${it.size ? ` (${esc(it.size)})` : ""}</a>`);
+  else if (isDoc && okUrl(it.url)) btns.push(`<a class="btn pri" href="${esc(it.url)}" target="_blank" rel="noopener">${I.down} ${what} في تليجرام${it.size ? ` (${esc(it.size)})` : ""}</a>`);
   else if (okUrl(it.file)) btns.push(`<a class="btn pri" href="${esc(it.file)}" target="_blank" rel="noopener">${I.down} تحميل</a>`);
   if (it.week && u) btns.push(`<a class="btn" href="#/w/${enc(u)}/${it.week}">الأسبوع ${num(it.week)}</a>`);
-  if (okUrl(it.url) && it.type !== "book" && it.type !== "file") btns.push(`<a class="btn" href="${esc(it.url)}" target="_blank" rel="noopener">${u ? I.tg + " في تليجرام" : I.yt + " في يوتيوب"}</a>`);
+  if (okUrl(it.url) && (!isDoc || okUrl(it.file_url))) btns.push(`<a class="btn" href="${esc(it.url)}" target="_blank" rel="noopener">${u ? I.tg + " في تليجرام" : I.yt + " في يوتيوب"}</a>`);
   btns.push(`<button class="btn ${isFav(it.id) ? "on" : ""}" type="button" data-fav>${I.save} <span>${isFav(it.id) ? "محفوظ" : "حفظ"}</span></button>`);
   btns.push(`<button class="btn" type="button" data-share>${I.share} مشاركة</button>`);
 

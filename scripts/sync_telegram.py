@@ -350,7 +350,7 @@ def build_weeks(items):
         if m:  # المقطع الأكثر وروداً في ملفات الأسبوع (قد يتأخر ملف من الأسبوع السابق)
             wk.setdefault("_p", Counter())[f"سورة {m.group(1)} " + re.sub(r"\s*[-–]\s*", " - ", m.group(2))] += 1
         if it["type"] == "file":
-            wk["files"].append({k: it[k] for k in ("id", "title", "url", "size", "date") if it.get(k)})
+            wk["files"].append({k: it[k] for k in ("id", "title", "url", "size", "date", "file_url", "file_size", "file_mime") if it.get(k)})
         elif it["type"] == "video" and it.get("youtube"):
             wk["videos"].append({"id": it["id"], "youtube": it["youtube"], "date": it["date"]})
     for wk in weeks.values():
@@ -391,9 +391,37 @@ def write_json(path, data):
     os.replace(tmp, path)
 
 
+SCHEMA_VERSION = 1
+FILES_STATE = os.path.join(OUTDIR, "files.json")
+
+
+def public_fields(items, cfg, files_state):
+    """حقول الصيغة الثابتة للتطبيقات (docs/data-format.md): روابط مطلقة كاملة للملف والصورة.
+    تُحسب من جديد في كل بناء، فتغيير base_url في sources.json يغيّر كل الروابط."""
+    from urllib.parse import quote
+    site = cfg.get("site_url", "").rstrip("/")
+    fbase = cfg.get("files", {}).get("base_url", "").rstrip("/")
+    posts, objs = files_state.get("posts", {}), files_state.get("objects", {})
+    for it in items.values():
+        for k in ("file_url", "file_size", "file_mime", "file_name", "image_url"):
+            it.pop(k, None)
+        if it.get("img") and site:
+            it["image_url"] = f"{site}/{it['img']}"
+        elif it.get("thumb"):
+            it["image_url"] = it["thumb"]
+        p = posts.get(it["id"], {})
+        if p.get("key") and fbase:
+            o = objs.get(p["key"], {})
+            it["file_url"] = f"{fbase}/{quote(p['key'])}"
+            for src, dst in (("size", "file_size"), ("mime", "file_mime"), ("name", "file_name")):
+                if o.get(src):
+                    it[dst] = o[src]
+
+
 def compact(it, n=180):
     t = re.sub(r"\s+", " ", it.get("text", "")).strip()
-    c = {k: it[k] for k in ("id", "type", "title", "date", "source", "url", "youtube", "thumb", "doc", "size") if it.get(k)}
+    c = {k: it[k] for k in ("id", "type", "title", "date", "source", "url", "youtube", "thumb", "doc", "size",
+                            "file_url", "file_size", "file_mime", "image_url") if it.get(k)}
     c["excerpt"] = t[:n] + ("…" if len(t) > n else "")
     return c
 
@@ -460,6 +488,8 @@ def sync_channel(username, full, state, weeks_on=False):
 
 def build_index(sources):
     channels, books, videos = {}, {}, []
+    cfg = load_json(SOURCES, {})
+    files_state = load_json(FILES_STATE, {})
     for s in sources:
         u = s["username"]
         known = load_channel(u)
@@ -468,6 +498,7 @@ def build_index(sources):
         organize(known, s.get("weeks", False))
         youtube_titles(known)
         youtube_owner_filter(known)
+        public_fields(known, cfg, files_state)
         save_channel(u, known)
         items = sorted(known.values(), key=lambda i: i["n"], reverse=True)
         tags = Counter(t for it in items for t in it.get("tags", []))
@@ -497,6 +528,9 @@ def build_index(sources):
             b.pop("series", None)
     write_json(os.path.join(OUTDIR, "index.json"), {
         "_generated": "يُولَّد تلقائياً بواسطة scripts/sync_telegram.py — لا تعدّله يدوياً",
+        "schema_version": SCHEMA_VERSION,
+        "site_url": cfg.get("site_url", ""),
+        "files_base_url": cfg.get("files", {}).get("base_url", ""),
         "shard": SHARD,
         "channels": channels,
         "books": sorted(books.values(), key=lambda b: b["date"], reverse=True),

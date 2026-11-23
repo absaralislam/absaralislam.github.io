@@ -37,6 +37,18 @@ jobs:
       - name: تليجرام
         run: python3 scripts/sync_telegram.py ${{ inputs.full && '--full' || '' }}
 
+      - name: نسخ الملفات إلى R2
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_STORAGE_CHAT_ID: ${{ secrets.TG_STORAGE_CHAT_ID }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          pip install --quiet boto3
+          python3 scripts/sync_files.py --limit 60
+
       - name: حفظ الصور
         run: |
           pip install --quiet pillow
